@@ -8,8 +8,7 @@ import requests
 import youtube_dl
 
 from exceptions import ResponseException
-from secrets import spotify_token, spotify_user_id
-
+from secrets import spotify_token
 
 class CreatePlaylist:
     def __init__(self):
@@ -38,14 +37,15 @@ class CreatePlaylist:
 
         return youtube_client
 
-    # def get_liked_videos(self):
     def get_playlist_videos(self):
+        val = input("Enter your youtube playlist id: ")
 
         # Grab our playlists
         request = self.youtube_client.playlistItems().list(
             part="snippet,contentDetails",
             # channelId="UCKWRgHeeyZaeI67QBVrqzVg",
-            playlistId="PLQtO8kDUKmqatKQsOD1k9BuoixupK7vOw"
+            # playlistId="PLQtO8kDUKmqatKQsOD1k9BuoixupK7vOw"
+            playlistId=val
         )
 
         response = request.execute()
@@ -75,15 +75,18 @@ class CreatePlaylist:
                 }
 
     def create_playlist(self):
+
+        user_id = input("Enter your spotify user id: ")
+
         """Create A New Playlist"""
         request_body = json.dumps({
-            "name": "Youtube Liked Vids",
-            "description": "All Liked Youtube Videos",
+            "name": "AutomateAton",
+            "description": "AutomateAton (youtube_spotify)",
             "public": True
         })
 
         query = "https://api.spotify.com/v1/users/{}/playlists".format(
-            spotify_user_id)
+            user_id)
         response = requests.post(
             query,
             data=request_body,
