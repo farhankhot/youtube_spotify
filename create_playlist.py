@@ -38,18 +38,24 @@ class CreatePlaylist:
 
         return youtube_client
 
-    def get_liked_videos(self):
-        """Grab Our Liked Videos & Create A Dictionary Of Important Song Information"""
-        request = self.youtube_client.videos().list(
-            part="snippet,contentDetails,statistics,id",
-            myRating="like"
+    # def get_liked_videos(self):
+    def get_playlist_videos(self):
+
+        # Grab our playlists
+        request = self.youtube_client.playlistItems().list(
+            part="snippet,contentDetails",
+            # channelId="UCKWRgHeeyZaeI67QBVrqzVg",
+            playlistId="PLQtO8kDUKmqatKQsOD1k9BuoixupK7vOw"
         )
+
         response = request.execute()
+        print(response)
+
         # collect each video and get important information
         for item in response["items"]:
             video_title = item["snippet"]["title"]
             youtube_url = "https://www.youtube.com/watch?v={}".format(
-                item["id"])
+                item["contentDetails"]["videoId"])
 
             # use youtube_dl to collect the song name & artist name
             video = youtube_dl.YoutubeDL({}).extract_info(youtube_url, download=False)
@@ -112,7 +118,7 @@ class CreatePlaylist:
     def add_song_to_playlist(self):
         """Add all liked songs into a new Spotify playlist"""
         # populate dictionary with our liked songs
-        self.get_liked_videos()
+        self.get_playlist_videos()
 
         # collect all of uri
         uris = [info["spotify_uri"]
@@ -137,7 +143,7 @@ class CreatePlaylist:
         )
 
         # check for valid response status
-        if response.status_code != 200:
+        if response.status_code != 200 or response.status_code != 201:
             raise ResponseException(response.status_code)
 
         response_json = response.json()
