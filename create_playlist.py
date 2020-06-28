@@ -24,9 +24,18 @@ class CreatePlaylist:
         api_service_name = "youtube"
         api_version = "v3"
         client_secrets_file = "client_secret.json"
+        scopes = ["https://www.googleapis.com/auth/youtube.readonly"]
+
+        # if os.path.exists("CREDENTIALS_PICKLE_FILE"):
+        #     with open("CREDENTIALS_PICKLE_FILE", 'rb') as f:
+        #         credentials = pickle.load(f)
+        # else:
+        #     flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(client_secrets_file, scopes)
+        #     credentials = flow.run_console()
+        #     with open("CREDENTIALS_PICKLE_FILE", 'wb') as f:
+        #         pickle.dump(credentials, f)
 
         # Get credentials and create an API client
-        scopes = ["https://www.googleapis.com/auth/youtube.readonly"]
         flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
             client_secrets_file, scopes)
         credentials = flow.run_console()
@@ -42,21 +51,18 @@ class CreatePlaylist:
 
         # Grab our playlists
         request = self.youtube_client.playlistItems().list(
+            maxResults=50,
             part="snippet,contentDetails",
-            # channelId="UCKWRgHeeyZaeI67QBVrqzVg",
-            # playlistId="PLQtO8kDUKmqatKQsOD1k9BuoixupK7vOw"
             playlistId=val
         )
 
         response = request.execute()
-        print(response)
 
         # collect each video and get important information
         for item in response["items"]:
             video_title = item["snippet"]["title"]
             youtube_url = "https://www.youtube.com/watch?v={}".format(
                 item["contentDetails"]["videoId"])
-
             # use youtube_dl to collect the song name & artist name
             video = youtube_dl.YoutubeDL({}).extract_info(youtube_url, download=False)
             song_name = video["track"]
@@ -77,6 +83,19 @@ class CreatePlaylist:
     def create_playlist(self):
 
         user_id = input("Enter your spotify user id: ")
+        # client_id = "a2bcb0c23d0c4d7d9432029823a2f74d"
+        # # Get OAuth2 token to create a new spotify playlist
+        # auth_query="https://accounts.spotify.com/authorize?client_id={}&redirect_uri=http:%2F%2Fexample.com%2Fcallback&scope=playlist-modify-public%20user-read-email&response_type=token&state=123".format(
+        #     client_id
+        # )
+        # response_auth = requests.post(
+        #     auth_query,
+        #     # headers={
+        #     #     "Content-Type": "application/x-www-form-urlencoded",
+        #     #     "Authorization": "Basic {}".format(spotify_token)
+        #     # }
+        # )
+
 
         """Create A New Playlist"""
         request_body = json.dumps({
@@ -102,7 +121,7 @@ class CreatePlaylist:
 
     def get_spotify_uri(self, song_name, artist):
         """Search For the Song"""
-        query = "https://api.spotify.com/v1/search?query=track%3A{}+artist%3A{}&type=track&offset=0&limit=20".format(
+        query = "https://api.spotify.com/v1/search?query=track%3A{}+artist%3A{}&type=track&offset=0&limit=50".format(
             song_name,
             artist
         )
@@ -115,17 +134,27 @@ class CreatePlaylist:
         )
         response_json = response.json()
         songs = response_json['tracks']['items']
-        uri = songs[0]["uri"]
-        return uri
+
+        # perhaps removing if would fix akon, abel bug
+        # list index out of range
+        if songs is not None:
+            uri = songs[0]["uri"]
+            return uri
 
     def add_song_to_playlist(self):
         """Add all liked songs into a new Spotify playlist"""
-        # populate dictionary with our liked songs
+        # populate dictionary with our youtube playlist songs,
+        # with spotify uris already stored in it
         self.get_playlist_videos()
 
         # collect all of uri
-        uris = [info["spotify_uri"]
-                for song, info in self.all_song_info.items()]
+        # uris = [info["spotify_uri"]
+        #         for song, info in self.all_song_info.items()]
+
+        uris=[]
+        for song, info in self.all_song_info.items():
+            # print(info)
+            uris.append(info["spotify_uri"])
 
         # create a new playlist
         playlist_id = self.create_playlist()
@@ -135,6 +164,7 @@ class CreatePlaylist:
 
         query = "https://api.spotify.com/v1/playlists/{}/tracks".format(
             playlist_id)
+
 
         response = requests.post(
             query,
@@ -156,3 +186,4 @@ class CreatePlaylist:
 if __name__ == '__main__':
     cp = CreatePlaylist()
     cp.add_song_to_playlist()
+input("Press enter to exit")
