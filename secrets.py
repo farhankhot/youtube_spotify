@@ -1,2 +1,2 @@
 spotify_token ="BQD6-nXPTH0WJ4W84f1h-HR1ch4GA0uEUDKMYJe2QxeWZUws7M1k89zone_RWwDOFJtgh7jF1fHNvkaf78mOK6c23ZbXBwe6bmVn4rSQALvMLixWJ-gq19EPaFfJtOIusopjc0qO_snhYUnSZOGxuU5DADosab8Cpe6njHO-m-iYXFS0s4u2fzKh7-0tMfy3aDR7JO8PtbaYdKjfgPieiIQtm6jfuDMPy418t1HKCgmLftm638dr99fj6wFjCc-6peO6e_fbsxtr42bsa3h0edkQ-CaK-J726pO1"
-# spotify_user_id = "2elf53ipajnd03a2uw8nlu780"
+# spotify_user_id = ""
