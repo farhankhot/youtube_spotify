@@ -77,9 +77,9 @@ class CreatePlaylist:
             video = youtube_dl.YoutubeDL({}).extract_info(youtube_url, download=False)
             song_name = video["track"]
             artist = video["artist"]
-            
-            if song_name is not None and artist is not None:
 
+            if song_name is not None and artist is not None:
+                # artist = artist.replace("Various Artists", "")
                 # Song preproccessing
                 song_name = song_name.replace('Album', '')
                 song_name = song_name.replace('Official', '')
@@ -88,20 +88,24 @@ class CreatePlaylist:
                 song_name = song_name.replace('Lyrics','')
                 song_name = song_name.replace('Version','')
                 song_name = song_name.replace('Super Clean', '')
+                song_name = song_name.replace('Instrumental', '')
+                song_name = song_name.replace('.', '')
                 # Can't feel my face bug
                 song_name = song_name.replace("'", "")
+                if artist == "Various Artists":
+                    continue
+                else:
+                    # save all important info and skip any missing song and artist
+                    self.all_song_info[video_title] = {
+                        "youtube_url": youtube_url,
+                        "song_name": song_name,
+                        "artist": artist,
 
-                # save all important info and skip any missing song and artist
-                self.all_song_info[video_title] = {
-                    "youtube_url": youtube_url,
-                    "song_name": song_name,
-                    "artist": artist,
+                        # add the uri, easy to get song to put into playlist
+                        "spotify_uri": self.get_spotify_uri(song_name, artist)
 
-                    # add the uri, easy to get song to put into playlist
-                    "spotify_uri": self.get_spotify_uri(song_name, artist)
-
-                }
-
+                    }
+                # print(self.all_song_info)
 
     def auth_spotify_account(self):
         user_name = input("Enter spotify username: ")
@@ -153,7 +157,7 @@ class CreatePlaylist:
         song_name = song_name.replace('version','')
         song_name = song_name.replace('super clean', '')
         song_name = song_name.replace('$','s')
-        song_name = song_name.replace('x','')
+        # song_name = song_name.replace('x','')
 
         """Search For the Song"""
         query = "https://api.spotify.com/v1/search?query=track%3A{}+artist%3A{}&type=track&offset=0&limit=20".format(
@@ -167,14 +171,16 @@ class CreatePlaylist:
                 "Authorization": "Bearer {}".format(self.spotify_token)
             }
         )
-        response_json = response.json()
-        songs = response_json['tracks']['items']
-        print(query)
 
-        uri = songs[0]["uri"]
-        if songs:
-            uri = songs[0]["uri"]
+        response_json = response.json()
+        song = response_json['tracks']['items']
+
+        uri=""
+        if song:
+            uri = song[0]["uri"]
             return uri
+        else:
+            print("not on spotify")
 
     def add_song_to_playlist(self):
         # Populate dictionary with our youtube playlist songs,
@@ -188,7 +194,11 @@ class CreatePlaylist:
         uris=[]
         for song, info in self.all_song_info.items():
             # print(info)
-            uris.append(info["spotify_uri"])
+            if info["spotify_uri"]:
+                uris.append(info["spotify_uri"])
+
+        # for _ in uris:
+        #     print("uri: %s" % _)
 
         # Create a new playlist
         playlist_id = self.create_playlist()
